@@ -7,8 +7,33 @@ class PeriodicTask {
   constructor(interval, calculationTime) {
     this.interval = interval;
     this.calculationTime = calculationTime;
+    // this.deadline = interval;
   }
+
+
 }
+
+const periodicTasks = [];
+const periodicTask1 = new PeriodicTask(4, 1);
+periodicTasks.push(periodicTask1);
+const periodicTask2 = new PeriodicTask(6, 2);
+periodicTasks.push(periodicTask2);
+
+// schedule
+(() => {
+  const pendingTasks = []
+  for(let i=0; i<MAX_TIME; i++) {
+    periodicTasks.forEach((task) => {
+      if(i % task.interval === 0) {
+        pendingTasks.push(task);
+      }
+    })
+  }
+
+})();
+// for i 0:MAX_TIME
+    // if(i % 周期 === 0) タスクをストックに追加
+    // 優先度を決める
 
 // draw periodic tasks
 (() => {
