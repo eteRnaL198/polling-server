@@ -42,7 +42,6 @@
   width: 1000px;
 }
 .task_bar {
-  /* background: #ccc; */
   border-bottom: 1px solid #000;
   height: 50%;
   position: relative;
@@ -51,6 +50,7 @@
 .task_bar-occur {
   height: 100%;
   background: blue;
+  border-bottom: 1px solid #000;
   position: relative;
   width: 2px;
 }
