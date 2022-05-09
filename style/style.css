@@ -26,8 +26,14 @@
 .task_wrapper {
   margin-bottom: 40px;
 }
-.task_name {
+.task_feature {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
   margin-bottom: 8px;
+}
+.task_name {
+  font-size: 1.3rem;
 }
 .task_inner {
   overflow-x: auto;
@@ -59,18 +65,26 @@
   left: -4px;
   position: absolute;
 }
-.task_block {
+.task_blockWrapper-full {
   display: flex;
   flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  border-bottom: 1px solid #000;
+}
+.task_blockWrapper-half {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
   height: 50%;
   border-bottom: 1px solid #000;
 }
-.task_block-progress {
+.task_block {
   display: flex;
   flex: 1;
-  height: 50%;
   background-color: #ccc;
-  border-bottom: 1px solid #000;
 }
 
 

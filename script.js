@@ -2,28 +2,30 @@
 
 const MAX_TIME = 30;
 
-// periodic tasks
-class PeriodicTask {
-  deadlineTime;
-
-  constructor(name, period, calculationTime) {
-    this.name = name;
-    this.calculationTime = calculationTime;
-    this.occurTimes = this.createOccurTimes(period);
+class Periodic {
+  constructor(period) {
     this.period = period;
-    this.isFailed = false;
-    this.remaining = 0;
-    this.progressTimes = [];
+    this.occurTimes = this.createOccurTimes(period);
   }
   createOccurTimes(period) {
     return [...Array(Math.floor(MAX_TIME/period)+1).fill(0).map((_, index) => index*period)];
+  }
+}
+
+class PeriodicTask extends Periodic {
+  deadlineTime;
+  constructor(name, period, calculationTime) {
+    super(period);
+    this.name = name;
+    this.calculationTime = calculationTime;
+    this.remaining = 0;
+    this.progressTimes = [];
   }
   #pushProgressTimes(time) {
     this.progressTimes = [...this.progressTimes, time];
   }
   occur(deadlineTime) {
     this.#updateDeadlineTime(deadlineTime);
-    this.isFailed = this.remaining !== 0 ? true : false;
     this.#setRemaining(this.calculationTime);
   }
   progress(time) {
@@ -42,6 +44,24 @@ class PeriodicTask {
   // draw
 }
 
+class AperiodicTask {
+  constructor(name, occurTime, calculationTime) {
+    this.name = name;
+    this.occurTime = occurTime;
+    this.calculationTime = calculationTime;
+  }
+}
+
+class PollingServer extends Periodic {
+  constructor(name, period, capacity) {
+    super(period);
+    this.name = name;
+    this.capacity = capacity;
+    this.remaining = 0;
+  }
+
+}
+
 // create tasks
 const periodicTasks = [];
 const periodicTask1 = new PeriodicTask("周期タスク1", 4, 1);
@@ -50,6 +70,8 @@ const periodicTask2 = new PeriodicTask("周期タスク2", 6, 2);
 periodicTasks.push(periodicTask2);
 const periodicTask3 = new PeriodicTask("周期タスク3", 5, 2);
 periodicTasks.push(periodicTask3);
+const pollingServer = new PeriodicTask("Polling Server", 4, 1);
+
 
 // schedule
 (() => {
@@ -70,49 +92,68 @@ periodicTasks.push(periodicTask3);
 
 })();
 
-// draw periodic tasks
+// draw tasks
 (() => {
-  const taskInners = []
-  periodicTasks.forEach((task, i) => {
+  const drawTask = (name, period, calculationTime, occurTimes, progressTimes, i) => {
     const mainContainer = document.getElementById("main_container");
     const taskWrapper = document.createElement('div');
     taskWrapper.classList.add('task_wrapper');
     mainContainer.appendChild(taskWrapper);
+    const taskFeature = document.createElement('div');
+    taskFeature.classList.add('task_feature');
+    taskWrapper.appendChild(taskFeature);
     const taskName = document.createElement('p');
+    taskName.innerHTML = name;
     taskName.classList.add('task_name');
-    taskName.innerHTML = task.name;
-    taskWrapper.appendChild(taskName);
+    taskFeature.appendChild(taskName);
+    const taskPeriod = document.createElement('p');
+    taskPeriod.innerHTML = `周期:${period}`;
+    taskFeature.appendChild(taskPeriod);
+    const taskCalcTime = document.createElement('p');
+    taskCalcTime.innerHTML = `計算時間:${calculationTime}`;
+    taskFeature.appendChild(taskCalcTime);
     const taskInner = document.createElement('div');
     taskInner.classList.add('task_inner');
     taskInners.push(taskInner);
     taskInner.addEventListener("scroll", () => syncScroll(taskInner));
-    taskName.appendChild(taskInner);
+    taskWrapper.appendChild(taskInner);
     const tasks = document.createElement('div');
     tasks.classList.add('tasks');
     tasks.id = `task-${i+1}`;
     taskInner.appendChild(tasks);
     for(let t=0; t<MAX_TIME; t++) {
       const taskBar = document.createElement('div');
-      taskBar.classList.add(`${task.occurTimes.includes(t) ? 'task_bar-occur' : 'task_bar'}`);
+      taskBar.classList.add(`${occurTimes.includes(t) ? 'task_bar-occur' : 'task_bar'}`);
       tasks.appendChild(taskBar);
       const timeLabel = document.createElement('p');
       timeLabel.classList.add('task_time');
       timeLabel.innerHTML = `${t}`;
       taskBar.appendChild(timeLabel);
+      const taskBlockWrapper = document.createElement('div');
+      taskBlockWrapper.classList.add('task_blockWrapper-half');
+      tasks.appendChild(taskBlockWrapper);
       const taskBlock = document.createElement('div');
-      if(task.progressTimes.includes(t)) {
-        taskBlock.classList.add("task_block-progress");
-      } else if(task.progressTimes.includes(-1*t) && !task.progressTimes.includes(0)) {
-        taskBlock.classList.add("task_block-progress");
+      if(progressTimes.includes(t)) {
+        taskBlock.classList.add("task_block");
+      } else if(progressTimes.includes(-1*t) && !progressTimes.includes(0)) {
+        taskBlock.classList.add("task_block");
         taskBlock.classList.add('bgc-red');
-      } else taskBlock.classList.add("task_block");
-      tasks.appendChild(taskBlock);
+      }
+      taskBlockWrapper.appendChild(taskBlock);
     }
-  })
-
+  }
   const syncScroll = (scrolledElem) => {
     taskInners.forEach(taskInner => {
       taskInner.scrollLeft = scrolledElem.scrollLeft
     })
   }
+  const taskInners = []
+
+  periodicTasks.forEach((task, i) => {
+    drawTask(task.name, task.period, task.calculationTime, task.occurTimes, task.progressTimes, i);
+  })
+
+  // 箱縦複数試す
+
+  
 })();
