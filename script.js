@@ -4,36 +4,37 @@ const MAX_TIME = 30;
 
 // periodic tasks
 class PeriodicTask {
-  progressTimes = [];
   deadlineTime;
-  remaining;
 
-  constructor(name, interval, calculationTime) {
+  constructor(name, period, calculationTime) {
     this.name = name;
     this.calculationTime = calculationTime;
-    this.occurTimes = this.createOccurTimes(interval);
-    // this.interval = interval;
-    // this.deadline = interval;
+    this.occurTimes = this.createOccurTimes(period);
+    this.period = period;
+    this.isFailed = false;
+    this.remaining = 0;
+    this.progressTimes = [];
   }
-  createOccurTimes(interval) {
-    return [...Array(Math.floor(MAX_TIME/interval)+1).fill(0).map((_, index) => index*interval)];
+  createOccurTimes(period) {
+    return [...Array(Math.floor(MAX_TIME/period)+1).fill(0).map((_, index) => index*period)];
   }
   #pushProgressTimes(time) {
     this.progressTimes = [...this.progressTimes, time];
   }
   occur(deadlineTime) {
-    this.#updateDeadLineTime(deadlineTime);
-    this.#setRemaining(this.calculationTime)
+    this.#updateDeadlineTime(deadlineTime);
+    this.isFailed = this.remaining !== 0 ? true : false;
+    this.#setRemaining(this.calculationTime);
   }
   progress(time) {
-    this.#pushProgressTimes(time);
+    this.#pushProgressTimes(this.remaining > this.calculationTime ? -1*time : time);
     this.#reduceRemaining();
   }
-  #updateDeadLineTime(time) {
-    this.deadlineTime = time;
+  #updateDeadlineTime(time) {
+    this.deadlineTime = time+this.period;
   }
   #setRemaining(r) {
-    this.remaining = r;
+    this.remaining += r;
   }
   #reduceRemaining() {
     this.remaining--;
@@ -41,25 +42,28 @@ class PeriodicTask {
   // draw
 }
 
+// create tasks
 const periodicTasks = [];
 const periodicTask1 = new PeriodicTask("周期タスク1", 4, 1);
 periodicTasks.push(periodicTask1);
 const periodicTask2 = new PeriodicTask("周期タスク2", 6, 2);
 periodicTasks.push(periodicTask2);
+const periodicTask3 = new PeriodicTask("周期タスク3", 5, 2);
+periodicTasks.push(periodicTask3);
 
 // schedule
 (() => {
   const pendingTasks = []
-  for(let i=0; i<MAX_TIME; i++) {
+  for(let t=0; t<MAX_TIME; t++) {
     periodicTasks.forEach((task) => {
-      if(task.occurTimes.includes(i)) {
-        task.occur(i);
+      if(task.occurTimes.includes(t)) {
+        task.occur(t);
         pendingTasks.push(task);
       }
     })
-    pendingTasks.sort((a, b) => a.deadlineTime - b.deadlineTime);
+    pendingTasks.sort((a, b) => a.period - b.period);
     if(pendingTasks[0]) {
-      pendingTasks[0].progress(i);
+      pendingTasks[0].progress(t);
       if(pendingTasks[0].remaining === 0) pendingTasks.shift();
     }
   }
@@ -87,16 +91,21 @@ periodicTasks.push(periodicTask2);
     tasks.classList.add('tasks');
     tasks.id = `task-${i+1}`;
     taskInner.appendChild(tasks);
-    for(let j=0; j<MAX_TIME; j++) {
+    for(let t=0; t<MAX_TIME; t++) {
       const taskBar = document.createElement('div');
-      taskBar.classList.add(`${task.occurTimes.includes(j) ? 'task_bar-occur' : 'task_bar'}`);
+      taskBar.classList.add(`${task.occurTimes.includes(t) ? 'task_bar-occur' : 'task_bar'}`);
       tasks.appendChild(taskBar);
-      const time = document.createElement('p');
-      time.classList.add('task_time');
-      time.innerHTML = `${j}`;
-      taskBar.appendChild(time);
+      const timeLabel = document.createElement('p');
+      timeLabel.classList.add('task_time');
+      timeLabel.innerHTML = `${t}`;
+      taskBar.appendChild(timeLabel);
       const taskBlock = document.createElement('div');
-      taskBlock.classList.add(`${task.progressTimes.includes(j) ? 'task_block-progress' : 'task_block'}`);
+      if(task.progressTimes.includes(t)) {
+        taskBlock.classList.add("task_block-progress");
+      } else if(task.progressTimes.includes(-1*t) && !task.progressTimes.includes(0)) {
+        taskBlock.classList.add("task_block-progress");
+        taskBlock.classList.add('bgc-red');
+      } else taskBlock.classList.add("task_block");
       tasks.appendChild(taskBlock);
     }
   })
