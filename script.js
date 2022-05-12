@@ -2,158 +2,227 @@
 
 const MAX_TIME = 30;
 
-class Periodic {
-  constructor(period) {
-    this.period = period;
-    this.occurTimes = this.createOccurTimes(period);
-  }
-  createOccurTimes(period) {
-    return [...Array(Math.floor(MAX_TIME/period)+1).fill(0).map((_, index) => index*period)];
-  }
-}
-
-class PeriodicTask extends Periodic {
-  deadlineTime;
-  constructor(name, period, calculationTime) {
-    super(period);
+class Task {
+  static taskInners = [];
+  constructor(name) {
     this.name = name;
-    this.calculationTime = calculationTime;
     this.remaining = 0;
-    this.progressTimes = [];
+    this.#drawFrame();
+    this.tasksElem;
+    this.taskFeatureElem;
+    this.state = this.setState("free");
+    this.overdue = false;
   }
-  #pushProgressTimes(time) {
-    this.progressTimes = [...this.progressTimes, time];
-  }
-  occur(deadlineTime) {
-    this.#updateDeadlineTime(deadlineTime);
-    this.#setRemaining(this.calculationTime);
-  }
-  progress(time) {
-    this.#pushProgressTimes(this.remaining > this.calculationTime ? -1*time : time);
-    this.#reduceRemaining();
-  }
-  #updateDeadlineTime(time) {
-    this.deadlineTime = time+this.period;
-  }
-  #setRemaining(r) {
-    this.remaining += r;
-  }
-  #reduceRemaining() {
+  progress() {
     this.remaining--;
   }
-  // draw
-}
-
-class AperiodicTask {
-  constructor(name, occurTime, calculationTime) {
-    this.name = name;
-    this.occurTime = occurTime;
-    this.calculationTime = calculationTime;
-  }
-}
-
-class PollingServer extends Periodic {
-  constructor(name, period, capacity) {
-    super(period);
-    this.name = name;
-    this.capacity = capacity;
-    this.remaining = 0;
-  }
-
-}
-
-// create tasks
-const periodicTasks = [];
-const periodicTask1 = new PeriodicTask("周期タスク1", 4, 1);
-periodicTasks.push(periodicTask1);
-const periodicTask2 = new PeriodicTask("周期タスク2", 6, 2);
-periodicTasks.push(periodicTask2);
-const periodicTask3 = new PeriodicTask("周期タスク3", 5, 2);
-periodicTasks.push(periodicTask3);
-const pollingServer = new PeriodicTask("Polling Server", 4, 1);
-
-
-// schedule
-(() => {
-  const pendingTasks = []
-  for(let t=0; t<MAX_TIME; t++) {
-    periodicTasks.forEach((task) => {
-      if(task.occurTimes.includes(t)) {
-        task.occur(t);
-        pendingTasks.push(task);
-      }
-    })
-    pendingTasks.sort((a, b) => a.period - b.period);
-    if(pendingTasks[0]) {
-      pendingTasks[0].progress(t);
-      if(pendingTasks[0].remaining === 0) pendingTasks.shift();
-    }
-  }
-
-})();
-
-// draw tasks
-(() => {
-  const drawTask = (name, period, calculationTime, occurTimes, progressTimes, i) => {
+  #drawFrame() {
     const mainContainer = document.getElementById("main_container");
     const taskWrapper = document.createElement('div');
     taskWrapper.classList.add('task_wrapper');
     mainContainer.appendChild(taskWrapper);
     const taskFeature = document.createElement('div');
+    this.taskFeatureElem = taskFeature;
     taskFeature.classList.add('task_feature');
     taskWrapper.appendChild(taskFeature);
     const taskName = document.createElement('p');
-    taskName.innerHTML = name;
+    taskName.innerHTML = this.name;
     taskName.classList.add('task_name');
     taskFeature.appendChild(taskName);
-    const taskPeriod = document.createElement('p');
-    taskPeriod.innerHTML = `周期:${period}`;
-    taskFeature.appendChild(taskPeriod);
-    const taskCalcTime = document.createElement('p');
-    taskCalcTime.innerHTML = `計算時間:${calculationTime}`;
-    taskFeature.appendChild(taskCalcTime);
     const taskInner = document.createElement('div');
     taskInner.classList.add('task_inner');
-    taskInners.push(taskInner);
-    taskInner.addEventListener("scroll", () => syncScroll(taskInner));
+    Task.taskInners.push(taskInner);
+    taskInner.addEventListener("scroll", () => {
+      Task.taskInners.forEach(otherInner => {
+        otherInner.scrollLeft = taskInner.scrollLeft
+      })
+    });
     taskWrapper.appendChild(taskInner);
     const tasks = document.createElement('div');
+    this.tasksElem = tasks;
     tasks.classList.add('tasks');
-    tasks.id = `task-${i+1}`;
     taskInner.appendChild(tasks);
-    for(let t=0; t<MAX_TIME; t++) {
-      const taskBar = document.createElement('div');
-      taskBar.classList.add(`${occurTimes.includes(t) ? 'task_bar-occur' : 'task_bar'}`);
-      tasks.appendChild(taskBar);
-      const timeLabel = document.createElement('p');
-      timeLabel.classList.add('task_time');
-      timeLabel.innerHTML = `${t}`;
-      taskBar.appendChild(timeLabel);
-      const taskBlockWrapper = document.createElement('div');
-      taskBlockWrapper.classList.add('task_blockWrapper-half');
-      tasks.appendChild(taskBlockWrapper);
-      const taskBlock = document.createElement('div');
-      if(progressTimes.includes(t)) {
-        taskBlock.classList.add("task_block");
-      } else if(progressTimes.includes(-1*t) && !progressTimes.includes(0)) {
-        taskBlock.classList.add("task_block");
-        taskBlock.classList.add('bgc-red');
-      }
-      taskBlockWrapper.appendChild(taskBlock);
+  }
+  drawBar(t, isOccur) {
+    const taskBar = document.createElement('div');
+    taskBar.classList.add(`${isOccur ? 'task_bar-occur' : 'task_bar'}`);
+    this.tasksElem.appendChild(taskBar);
+    const timeLabel = document.createElement('p');
+    timeLabel.classList.add('task_time');
+    timeLabel.innerHTML = `${t}`;
+    taskBar.appendChild(timeLabel);
+  }
+  drawBlockWrapper() {
+    const taskBlockWrapper = document.createElement('div');
+    taskBlockWrapper.classList.add('task_blockWrapper');
+    return this.tasksElem.appendChild(taskBlockWrapper);
+  }
+  setState(state) {
+    this.state = state;
+  }
+  isOverdue() {
+    this.overdue = this.remaining > this.calculationTime
+  }
+}
+
+class PeriodicTask extends Task {
+  constructor(name, period, calculationTime) {
+    super(name);
+    this.period = period;
+    this.calculationTime = calculationTime;
+    this.#drawFeature();
+  }
+  isOccurTime(t) {
+    return t % this.period === 0 || t === 0
+  }
+  occur() {
+    this.remaining += this.calculationTime;
+  }
+  #drawFeature() {
+    const taskPeriod = document.createElement('p');
+    taskPeriod.innerHTML = `周期:${this.period}`;
+    this.taskFeatureElem.appendChild(taskPeriod);
+    const taskCalcTime = document.createElement('p');
+    taskCalcTime.innerHTML = `計算時間:${this.calculationTime}`;
+    this.taskFeatureElem.appendChild(taskCalcTime);
+  }
+  drawBlock(wrapper) {
+    const taskBlock = document.createElement('div');
+    taskBlock.classList.add("task_block");
+    if(this.overdue) {
+      taskBlock.classList.add('bgc-red');
+    }
+    wrapper.appendChild(taskBlock);
+  }
+}
+
+class AperiodicTask extends Task {
+  constructor(name, data) {
+    super(name)
+    this.calculationTimes = this.#initCalculationTimes(data);
+    this.calculationTime = this.calculationTimes[0]
+    this.occurTimes = this.#initOccurTimes(data);
+  }
+  isOccurTime(t) {
+    return this.occurTimes.includes(t);
+  }
+  occur() {
+    this.remaining += this.calculationTime;
+  }
+  progress() {
+    super.progress();
+    if(this.remaining == 0) {
+      this.calculationTimes = this.calculationTimes.slice(1);
+      this.calculationTime = this.calculationTimes[0];
     }
   }
-  const syncScroll = (scrolledElem) => {
-    taskInners.forEach(taskInner => {
-      taskInner.scrollLeft = scrolledElem.scrollLeft
+  #initOccurTimes(data) {
+    return data.map((data) => data.occurTime);
+  }
+  #initCalculationTimes(data) {
+    return data.map((data) => data.calculationTime);
+  }
+  drawBar(t, isOccur) {
+    super.drawBar(t, isOccur);
+    // 小さく発生タスク数描画
+  }
+  drawBlock(wrapper) {
+    const taskBlock = document.createElement('div');
+    taskBlock.classList.add("task_block");
+    if(this.overdue) {
+      taskBlock.classList.add('bgc-red');
+    }
+    wrapper.appendChild(taskBlock);
+  }
+}
+
+class PollingServer extends Task {
+  constructor(name, period, capacity) {
+    super(name);
+    this.period = period;
+    this.capacity = capacity;
+    this.#drawFeature();
+  }
+  isOccurTime(t) {
+    return t % this.period === 0 || t === 0
+  }
+  occur() {
+    this.remaining = this.capacity;
+  }
+  progress(task) {
+    // if(task.remaining > 0) {
+      super.progress();
+      // task.progress();
+    // }
+  }
+  #drawFeature() {
+    const taskPeriod = document.createElement('p');
+    taskPeriod.innerHTML = `周期:${this.period}`;
+    this.taskFeatureElem.appendChild(taskPeriod);
+    const taskCalcTime = document.createElement('p');
+    taskCalcTime.innerHTML = `容量:${this.capacity}`;
+    this.taskFeatureElem.appendChild(taskCalcTime);
+  }
+  drawBlock(wrapper) {
+    // if(i=0 && this.state === "progress") {
+    //   taskBlock.classList.add('bgc-gray');
+    // }
+    let innerHtml = "";
+    const height = 100 / this.capacity;
+    for(let i=0; i<this.remaining; i++) {
+      innerHtml += `<div class="task_block" style="height:${height}%"></div>`
+    }
+    wrapper.innerHTML = innerHtml;
+  }
+}
+
+// create tasks
+const AllTasks = [];
+const periodicTask1 = new PeriodicTask("周期タスク1", 4, 1);
+AllTasks.push(periodicTask1);
+const periodicTask2 = new PeriodicTask("周期タスク2", 6, 2);
+AllTasks.push(periodicTask2);
+// const periodicTask3 = new PeriodicTask("周期タスク3", 5, 2);
+// AllTasks.push(periodicTask3);
+// const aperiodicTask = new AperiodicTask("非周期タスク", [
+//   {occurTime: 2, calculationTime: 2}, 
+//   {occurTime: 8, calculationTime: 1},
+//   {occurTime: 12, calculationTime: 2}, 
+//   {occurTime: 19, calculationTime: 1}
+// ]);
+// AllTasks.push(aperiodicTask);
+const pollingServer = new PollingServer("Polling Server", 4, 3);
+AllTasks.push(pollingServer);
+
+// schedule
+(() => {
+  const pendingTasks = [];
+  for(let t=0; t<MAX_TIME; t++) {
+    AllTasks.forEach((task) => {
+      task.setState("free");
+      if(task.isOccurTime(t)) {
+        task.occur();
+        task.drawBar(t, true);
+        pendingTasks.push(task);
+      } else {
+        task.drawBar(t, false)
+      }
+    })
+    pendingTasks.sort((a, b) => a.period - b.period);
+      while(pendingTasks[0] && pendingTasks[0].remaining === 0) {
+        pendingTasks.shift();
+      }
+      if(pendingTasks[0]) pendingTasks[0].setState("progress");
+    AllTasks.forEach((task) => {
+      task.isOverdue();
+      if(task.overdue) console.log(`${task.name} is overdue! t=${t}`);
+      const wrapper = task.drawBlockWrapper();
+      if(task.state === "progress") {
+        task.progress();
+        task.drawBlock(wrapper);
+      } else if(task.state === "wait") {
+        task.drawBlock(wrapper)
+      }
     })
   }
-  const taskInners = []
-
-  periodicTasks.forEach((task, i) => {
-    drawTask(task.name, task.period, task.calculationTime, task.occurTimes, task.progressTimes, i);
-  })
-
-  // 箱縦複数試す
-
-  
 })();

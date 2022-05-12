@@ -12,11 +12,12 @@
 }
 
 .main {
+  align-items: center;
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  padding-top: 24px;
 }
 .main_container {
   width: 80%;
@@ -65,7 +66,7 @@
   left: -4px;
   position: absolute;
 }
-.task_blockWrapper-full {
+.task_blockWrapper {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -73,54 +74,16 @@
   height: 100%;
   border-bottom: 1px solid #000;
 }
-.task_blockWrapper-half {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: flex-end;
-  height: 50%;
-  border-bottom: 1px solid #000;
-}
 .task_block {
-  display: flex;
-  flex: 1;
+  height: 50%;
+  background-color: #888;
+  margin: 1px;
+}
+
+
+.bgc-gray {
   background-color: #ccc;
 }
-
-
 .bgc-red {
   background-color: #f0736a;
-}
-.bgc0 {
-  background-color: rgba(0, 0, 0, 0);
-}
-.bgc1 {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-.bgc2 {
-  background-color: rgba(0, 0, 0, 0.2);
-}
-.bgc3 {
-  background-color: rgba(0, 0, 0, 0.3);
-}
-.bgc4n {
-  background-color: rgba(0, 0, 0, 0.4);
-}
-.bgc5 {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-.bgc6 {
-  background-color: rgba(0, 0, 0, 0.6);
-}
-.bgc7 {
-  background-color: rgba(0, 0, 0, 0.7)
-}
-.bgc8 {
-  background-color: rgba(0, 0, 0, 0.8);
-}
-.bgc9 {
-  background-color: rgba(0, 0, 0, 0.9);
-}
-.bgc10 {
-  background-color: rgba(0, 0, 0, 1.0);
 }
