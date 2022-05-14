@@ -12,6 +12,57 @@
   <header class="header"><h1>Polling Server Simulator</h1></header>
   <main class="main">
     <div class="main_container" id="main_container">
+      <div class="config" id="config">
+        <div class="config_unit">
+          <p class="config_name">周期タスク1</p>
+          <div class="config_feature">
+            <div>
+              <p>周期</p>
+              <input type="text" class="config_input config_periodicTask_period">
+            </div>
+            <div>
+              <p>計算時間</p>
+              <input type="text" class="config_input config_periodicTask_calculationTime">
+            </div>
+          </div>
+        </div>
+        <div class="config_buttonWrapper" id="periodicTaskButton_wrapper">
+          <button class="config_button" id="remove_periodicTask">周期タスクの削除</button>
+          <button class="config_button" id="add_periodicTask">周期タスクの追加</button>
+        </div>
+        <div class="config_unit">
+          <p class="config_name">非周期タスク</p>
+          <div class="config_feature aperiodicTaskFeatures">
+            <div>
+              <p>発生時刻</p>
+            <input type="text" class="config_input config_aperiodicTask_occurTime">
+            </div>
+            <div>
+              <p>計算時間</p>
+              <input type="text" class="config_input config_aperiodicTask_calculationTime">
+            </div>
+          </div>
+          <div class="config_buttonWrapper">
+            <button class="config_button" id="remove_aperiodicTaskFeature">削除</button>
+            <button class="config_button" id="add_aperiodicTaskFeature">追加</button>
+          </div>
+        </div>
+        <div class="config_unit">
+          <p class="config_name">Polling Server</p>
+          <div class="config_feature">
+            <div>
+              <p>周期</p>
+              <input type="text" class="config_input config_pollingServer_period">
+          </div>
+          <div>
+            <p>容量</p>
+            <input type="text" class="config_input config_pollingServer_calculationTime">
+          </div>
+        </div>
+        </div>
+        <button class="config_button" id="execute">実行</button>
+      </div>
+      <div class="hidden" id="schedule"></div>
     </div>
   </main>
   <script type="text/javascript" src="./script.js"></script>

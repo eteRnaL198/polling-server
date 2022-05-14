@@ -1,5 +1,7 @@
 "use strict";
 
+
+
 const MAX_TIME = 30;
 
 class Task {
@@ -25,10 +27,10 @@ class Task {
     else this.setState("wait");
   }
   #drawFrame() {
-    const mainContainer = document.getElementById("main_container");
+    const container = document.getElementById("schedule");
     const taskWrapper = document.createElement('div');
     taskWrapper.classList.add('task_wrapper');
-    mainContainer.appendChild(taskWrapper);
+    container.appendChild(taskWrapper);
     const taskFeature = document.createElement('div');
     this.taskFeatureElem = taskFeature;
     taskFeature.classList.add('task_feature');
@@ -134,7 +136,7 @@ class AperiodicTask extends Task {
     this.drawBlock(wrapper);
     if(this.state === "free") {
       this.calculationTimes = this.calculationTimes.slice(1);
-      this.calculationTime = this.calculationTimes[0]; // 要素がない場合の対処
+      if(this.calculationTimes) this.calculationTime = this.calculationTimes[0];
     }
   }
   #initOccurTimes(data) {
@@ -166,6 +168,7 @@ class PollingServer extends Task {
   progress(wrapper) {
     this.drawBlock(wrapper);
     super.progress();
+    if(this.aperiodicTask.remaining === 1) this.setState("free");
     this.aperiodicTask.setState("progress");
   }
   #drawFeature() {
@@ -190,69 +193,46 @@ class PollingServer extends Task {
   }
 }
 
-// class Scheduler {
-//   constructor(t) {
-//     this.maxTime = t;
-//     this.allTasks = [];
-//   }
-//   pushAllTasks(task) {
-//     this.allTasks = [...this.allTasks, task];
-//   }
-//   schedule() {
-//     for(let t=0; t<this.maxTime; t++) {
-//     }
-//   }
-// }
+const createTaks = () => {
+  const allTasks = [];
+  const periodicTasks = [];
+  const periodicTask1 = new PeriodicTask("周期タスク1", 4, 1);
+  allTasks.push(periodicTask1);
+  periodicTasks.push(periodicTask1);
+  const periodicTask2 = new PeriodicTask("周期タスク2", 6, 2);
+  // const periodicTask2 = new PeriodicTask("周期タスク2", 6, 3);
+  allTasks.push(periodicTask2);
+  periodicTasks.push(periodicTask2);
+  // const periodicTask3 = new PeriodicTask("周期タスク3", 5, 2);
+  // allTasks.push(periodicTask3);
+  const aperiodicTask = new AperiodicTask("非周期タスク", [
+    {occurTime: 2, calculationTime: 2}, 
+    {occurTime: 8, calculationTime: 1},
+    {occurTime: 12, calculationTime: 2}, 
+    {occurTime: 19, calculationTime: 1}
+  ]);
+  const pollingServer = new PollingServer("Polling Server", 5, 2, aperiodicTask);
+  allTasks.push(pollingServer);
+  periodicTasks.push(pollingServer);
+  allTasks.push(aperiodicTask);
+  return [allTasks, periodicTasks];
+}
 
-// create tasks
-const allTasks = [];
-const periodicTasks = [];
-const periodicTask1 = new PeriodicTask("周期タスク1", 4, 1);
-allTasks.push(periodicTask1);
-periodicTasks.push(periodicTask1);
-const periodicTask2 = new PeriodicTask("周期タスク2", 6, 2);
-// const periodicTask2 = new PeriodicTask("周期タスク2", 6, 3);
-allTasks.push(periodicTask2);
-periodicTasks.push(periodicTask2);
-// const periodicTask3 = new PeriodicTask("周期タスク3", 5, 2);
-// allTasks.push(periodicTask3);
-const aperiodicTask = new AperiodicTask("非周期タスク", [
-  {occurTime: 2, calculationTime: 2}, 
-  {occurTime: 8, calculationTime: 1},
-  {occurTime: 12, calculationTime: 2}, 
-  {occurTime: 19, calculationTime: 1}
-]);
-const pollingServer = new PollingServer("Polling Server", 5, 2, aperiodicTask);
-allTasks.push(pollingServer);
-periodicTasks.push(pollingServer);
-allTasks.push(aperiodicTask);
-
-// schedule
-(() => {
-  // const pendingTasks = [];
+const schedule = (allTasks, periodicTasks) => {
   for(let t=0; t<MAX_TIME; t++) {
     allTasks.forEach((task) => {
       if(task.isOccurTime(t)) {
         task.occur();
         task.drawBar(t, true);
-        // pendingTasks.push(task);
       } else {
         task.drawBar(t, false);
       }
     })
     const priorityTask = periodicTasks.filter((task) => task.state === "wait").sort((a, b) => a.period - b.period)[0];
     if(priorityTask) priorityTask.setState("progress");
-    // pendingTasks.sort((a, b) => a.period - b.period);
-    // while(pendingTasks[0] && pendingTasks[0].state === "free") {
-    //   pendingTasks.shift();
-    // }
-    // if(pendingTasks[0] && pendingTasks[0].state === "wait") {
-    //   pendingTasks[0].setState("progress");
-    // }
     allTasks.forEach((task) => {
       task.confirmDeadline(t);
       const wrapper = task.drawBlockWrapper();
-      console.log(task.name, task.state, task.remaining, t);
       if(task.state === "progress") {
         task.progress(wrapper);
       } else if(task.state === "wait") {
@@ -260,4 +240,85 @@ allTasks.push(aperiodicTask);
       }
     })
   }
+
+};
+
+// 実行・戻るボタン
+(() => {
+  const config = document.getElementById("config");
+  const scheduleElem = document.getElementById("schedule");
+  const backButton = document.createElement('button');
+  backButton.classList.add('schedule_button');
+  backButton.innerHTML = '戻る';
+  backButton.addEventListener('click', () => {
+    config.classList.remove('hidden');
+    scheduleElem.classList.add('hidden');
+    while(scheduleElem.children.length > 0) {
+      scheduleElem.removeChild(scheduleElem.children[0]);
+    }
+  });
+  scheduleElem.appendChild(backButton);
+  const execButton = document.getElementById("execute");
+  execButton.addEventListener("click", () => {
+    const [allTasks, periodicTasks] = createTaks();
+    schedule(allTasks, periodicTasks);
+    scheduleElem.appendChild(backButton);
+    config.classList.add('hidden');
+    scheduleElem.classList.remove('hidden');
+  });
+})();
+
+
+// 追加・削除ボタン
+(() => {
+  const addPeriodicTaskButton = document.getElementById("add_periodicTask");
+  const periodicTaskButtonWrapper = document.getElementById("periodicTaskButton_wrapper");
+  let taskNum = 1;
+  addPeriodicTaskButton.addEventListener("click", () => {
+    taskNum++;
+    const periodicUnit = document.createElement("div");
+    periodicUnit.classList.add("config_unit");
+    periodicUnit.innerHTML = `
+      <p class="config_name">周期タスク${taskNum}</p>
+      <div class="config_feature">
+        <div>
+          <p>周期</p>
+          <input type="text" class="config_input config_periodicTask_period">
+        </div>
+        <div>
+          <p>計算時間</p>
+          <input type="text" class="config_input config_periodicTask_calculationTime">
+        </div>
+      </div>
+    `;
+    periodicTaskButtonWrapper.parentNode.insertBefore(periodicUnit, periodicTaskButtonWrapper);
+  });
+  const removePeriodicTaskButton = document.getElementById("remove_periodicTask");
+  removePeriodicTaskButton.addEventListener("click", () => {
+    periodicTaskButtonWrapper.parentNode.removeChild(periodicTaskButtonWrapper.parentNode.children[taskNum-1]);
+    taskNum--;
+  })
+
+  const aperiodicTaskFeature = document.getElementsByClassName("aperiodicTaskFeatures")[0];
+  const addAperiodicTaskFeatureButton = document.getElementById("add_aperiodicTaskFeature");
+  addAperiodicTaskFeatureButton.addEventListener("click", () => {
+    const newFeature = document.createElement("div");
+    newFeature.classList.add("config_feature");
+    newFeature.classList.add("aperiodicTaskFeature");
+    newFeature.innerHTML = `
+      <div>
+        <p>発生時刻</p>
+        <input type="text" class="config_input config_aperiodicTask_occurTime">
+      </div>
+      <div>
+        <p>計算時間</p>
+        <input type="text" class="config_input config_aperiodicTask_calculationTime">
+      </div>
+    `;
+    aperiodicTaskFeature.parentNode.insertBefore(newFeature, addAperiodicTaskFeatureButton.parentNode);
+  })
+  const removeAperiodicTaskFeatureButton = document.getElementById("remove_aperiodicTaskFeature");
+  removeAperiodicTaskFeatureButton.addEventListener("click", () => {
+    aperiodicTaskFeature.parentNode.removeChild(aperiodicTaskFeature.parentNode.children[aperiodicTaskFeature.parentNode.children.length-2]);
+  });
 })();
