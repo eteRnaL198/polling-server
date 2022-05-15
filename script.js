@@ -326,7 +326,7 @@ const schedule = (execTime, allTasks, periodicTasks) => {
   });
   const removePeriodicTaskButton = document.getElementById("remove_periodicTask");
   removePeriodicTaskButton.addEventListener("click", () => {
-    periodicTaskButtonWrapper.parentNode.removeChild(periodicTaskButtonWrapper.parentNode.children[taskNum-1]);
+    periodicTaskButtonWrapper.parentNode.removeChild(periodicTaskButtonWrapper.parentNode.children[taskNum]);
     taskNum--;
   })
 
