@@ -1,7 +1,5 @@
 "use strict";
 
-
-
 const MAX_TIME = 30;
 
 class Task {
@@ -193,25 +191,57 @@ class PollingServer extends Task {
   }
 }
 
-const createTaks = () => {
+const getTaskFeature = (unitElem) => {
+  const taskFeature = {
+    name: "",
+    feature: [],
+  }
+  Array.from(unitElem.children).forEach((child, i) => {
+    if(i === 0) {
+      taskFeature.name = child.innerHTML;
+    } else if(child.className !== "config_buttonWrapper") {
+      const feature = {
+        time: 0,
+        calcOrCapa: 0,
+      };
+      feature.time = parseInt(child.children[0].children[1].value);
+      feature.calcOrCapa = parseInt(child.children[1].children[1].value);
+      taskFeature.feature.push(feature);
+    }
+  });
+  return taskFeature;
+}
+
+const getTasks = () => {
+  const periodicUnits = document.getElementsByClassName("config_periodic");
+  let periodicFeatures = [];
+  periodicFeatures = Array.from(periodicUnits).map((unitElem) => (
+    getTaskFeature(unitElem)
+  ))
+  const aperiodicUnit = document.getElementById("config_aperiodic");
+  const aperiodicFeature = getTaskFeature(aperiodicUnit);
+  const pollingServerUnit = document.getElementById("config_pollingServer");
+  const pollingServerFeature = getTaskFeature(pollingServerUnit);
+  return [periodicFeatures, aperiodicFeature, pollingServerFeature];
+}
+
+const createTasks = (periodicFeatures, aperiodicFeature, pollingServerFeature) => {
   const allTasks = [];
   const periodicTasks = [];
-  const periodicTask1 = new PeriodicTask("周期タスク1", 4, 1);
-  allTasks.push(periodicTask1);
-  periodicTasks.push(periodicTask1);
-  const periodicTask2 = new PeriodicTask("周期タスク2", 6, 2);
-  // const periodicTask2 = new PeriodicTask("周期タスク2", 6, 3);
-  allTasks.push(periodicTask2);
-  periodicTasks.push(periodicTask2);
-  // const periodicTask3 = new PeriodicTask("周期タスク3", 5, 2);
-  // allTasks.push(periodicTask3);
-  const aperiodicTask = new AperiodicTask("非周期タスク", [
-    {occurTime: 2, calculationTime: 2}, 
-    {occurTime: 8, calculationTime: 1},
-    {occurTime: 12, calculationTime: 2}, 
-    {occurTime: 19, calculationTime: 1}
-  ]);
-  const pollingServer = new PollingServer("Polling Server", 5, 2, aperiodicTask);
+  periodicFeatures.forEach((feature) => {
+    const newTask = new PeriodicTask(feature.name, feature.feature[0].time, feature.feature[0].calcOrCapa);
+    allTasks.push(newTask);
+    periodicTasks.push(newTask);
+  })
+  const newAperiodicFeatures = aperiodicFeature.feature.map(feature => (
+    { occurTime: feature.time, calculationTime: feature.calcOrCapa }
+  ))
+  const aperiodicTask = new AperiodicTask(aperiodicFeature.name, newAperiodicFeatures);
+  const pollingServer = new PollingServer(
+    pollingServerFeature.name, 
+    pollingServerFeature.feature[0].time,
+    pollingServerFeature.feature[0].calcOrCapa,
+    aperiodicTask);
   allTasks.push(pollingServer);
   periodicTasks.push(pollingServer);
   allTasks.push(aperiodicTask);
@@ -260,7 +290,8 @@ const schedule = (allTasks, periodicTasks) => {
   scheduleElem.appendChild(backButton);
   const execButton = document.getElementById("execute");
   execButton.addEventListener("click", () => {
-    const [allTasks, periodicTasks] = createTaks();
+    const [periodicFeatures, aperiodicFeature, pollingServerFeature] = getTasks();
+    const [allTasks, periodicTasks] = createTasks(periodicFeatures, aperiodicFeature, pollingServerFeature);
     schedule(allTasks, periodicTasks);
     scheduleElem.appendChild(backButton);
     config.classList.add('hidden');
@@ -283,11 +314,11 @@ const schedule = (allTasks, periodicTasks) => {
       <div class="config_feature">
         <div>
           <p>周期</p>
-          <input type="text" class="config_input config_periodicTask_period">
+          <input type="text" class="config_input">
         </div>
         <div>
           <p>計算時間</p>
-          <input type="text" class="config_input config_periodicTask_calculationTime">
+          <input type="text" class="config_input">
         </div>
       </div>
     `;
