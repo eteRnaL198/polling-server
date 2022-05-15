@@ -309,6 +309,7 @@ const schedule = (allTasks, periodicTasks) => {
     taskNum++;
     const periodicUnit = document.createElement("div");
     periodicUnit.classList.add("config_unit");
+    periodicUnit.classList.add("config_periodic");
     periodicUnit.innerHTML = `
       <p class="config_name">周期タスク${taskNum}</p>
       <div class="config_feature">

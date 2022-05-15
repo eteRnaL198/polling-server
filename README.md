@@ -17,8 +17,6 @@
   - Polling Server
     - 周期 5, 容量 2
 
-
-
 スケジュール失敗例
 const periodicTask1 = new PeriodicTask("周期タスク1", 4, 1);
 const periodicTask2 = new PeriodicTask("周期タスク2", 6, 2);
