@@ -44,7 +44,6 @@
 .config_feature {
   display: flex;
   justify-content: space-around;
-
   width: 80%;
 }
 .config_name {
@@ -94,16 +93,19 @@
 .tasks {
   align-items: flex-end;
   display: flex;
+  flex-shrink: 0;
   height: 80px;
   padding-left: 10px;
   padding-bottom: 1.2rem;
-  width: 1000px;
+  /* min-width: 1000px; */
+  min-width: auto;
 }
 .task_bar {
   border-bottom: 1px solid #000;
   height: 50%;
   position: relative;
   width: 2px;
+  min-width: 2px;
 }
 .task_bar-occur {
   height: 100%;
@@ -111,11 +113,13 @@
   border-bottom: 1px solid #000;
   position: relative;
   width: 2px;
+  min-width: 2px;
 }
 .task_time {
   bottom: -1.2rem;
   left: -4px;
   position: absolute;
+  min-width: 2rem;
 }
 .task_blockWrapper {
   display: flex;
@@ -124,6 +128,7 @@
   justify-content: flex-end;
   height: 100%;
   border-bottom: 1px solid #000;
+  min-width: 32px;
 }
 .task_block {
   height: 50%;

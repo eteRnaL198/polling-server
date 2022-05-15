@@ -1,7 +1,5 @@
 "use strict";
 
-const MAX_TIME = 30;
-
 class Task {
   static taskInners = [];
   constructor(name) {
@@ -248,8 +246,8 @@ const createTasks = (periodicFeatures, aperiodicFeature, pollingServerFeature) =
   return [allTasks, periodicTasks];
 }
 
-const schedule = (allTasks, periodicTasks) => {
-  for(let t=0; t<MAX_TIME; t++) {
+const schedule = (execTime, allTasks, periodicTasks) => {
+  for(let t=0; t<execTime; t++) {
     allTasks.forEach((task) => {
       if(task.isOccurTime(t)) {
         task.occur();
@@ -292,7 +290,8 @@ const schedule = (allTasks, periodicTasks) => {
   execButton.addEventListener("click", () => {
     const [periodicFeatures, aperiodicFeature, pollingServerFeature] = getTasks();
     const [allTasks, periodicTasks] = createTasks(periodicFeatures, aperiodicFeature, pollingServerFeature);
-    schedule(allTasks, periodicTasks);
+    const execTime = document.getElementById("config_execTime").value;
+    schedule(execTime, allTasks, periodicTasks);
     scheduleElem.appendChild(backButton);
     config.classList.add('hidden');
     scheduleElem.classList.remove('hidden');
