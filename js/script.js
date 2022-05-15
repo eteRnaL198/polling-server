@@ -74,10 +74,10 @@ class Task {
   setState(state) {
     this.state = state;
   }
-  confirmDeadline(t) {
-    const overdue = this.remaining > this.calculationTime; 
+  confirmDeadline() {
+    const overdue = this.remaining > this.calculationTime;
     this.overdue = overdue;
-    if(overdue) console.log(`${this.name} is overdue! t=${t}`);
+    return overdue ? 1 : 0;
   }
 }
 
@@ -247,6 +247,7 @@ const createTasks = (periodicFeatures, aperiodicFeature, pollingServerFeature) =
 }
 
 const schedule = (execTime, allTasks, periodicTasks) => {
+  let overdueFlag = 0;
   for(let t=0; t<execTime; t++) {
     allTasks.forEach((task) => {
       if(task.isOccurTime(t)) {
@@ -259,7 +260,7 @@ const schedule = (execTime, allTasks, periodicTasks) => {
     const priorityTask = periodicTasks.filter((task) => task.state === "wait").sort((a, b) => a.period - b.period)[0];
     if(priorityTask) priorityTask.setState("progress");
     allTasks.forEach((task) => {
-      task.confirmDeadline(t);
+      overdueFlag += task.confirmDeadline();
       const wrapper = task.drawBlockWrapper();
       if(task.state === "progress") {
         task.progress(wrapper);
@@ -268,7 +269,16 @@ const schedule = (execTime, allTasks, periodicTasks) => {
       }
     })
   }
-
+  if(overdueFlag > 0) {
+    const message = periodicTasks.reduce((prev, task) => {
+      if(task.calculationTime) {
+        return `${prev} ${task.name}, C:${task.calculationTime/task.period}`;
+      } else {
+        return `${prev} ${task.name}, C:${task.capacity/task.period}`;
+      }
+    }, "")
+    console.log(`schedule failed, ${message}`);
+  }
 };
 
 // 実行・戻るボタン
